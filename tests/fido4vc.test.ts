@@ -1,5 +1,5 @@
-import { extractChallenge, verifyProofSignature } from '../src/suites/webauthn/helpers';
-import { Webauthn2026Cryptosuite } from '../src/suites/webauthn/webauthn-2026';
+import { extractChallenge, verifyProofSignature } from '../src/suites/fido4vc/helpers';
+import { Fido4vcCryptosuite } from '../src/suites/fido4vc/fido4vc-cryptosuite';
 import { base64urlToUtf8 } from '../src/lib/utils';
 
 const jwk = {
@@ -32,6 +32,10 @@ const signedLd = {
     'did:jwk:eyJrdHkiOiJFQyIsImNydiI6IlAtMjU2IiwieCI6Im9kWUZUSTJkRmJKZlE4SE5BcFhCV3hQQWowbEFXWkk4ZXhDZVMzTnk1bDAiLCJ5IjoiclZ4UzNNelg3bDY2QkU2ZHlVZEF1cE5FRURJWnVxRHpVbVNIVmcxOEw2ZyJ9',
   proof: {
     type: 'DataIntegrityProof',
+    // Legacy fixture: this VP was signed before the cryptosuite was renamed
+    // from 'webauthn-2026' to 'fido4vc-jcs-2026'. The string is part of the
+    // signed bytes via JCS canonicalization, so it must stay as the original
+    // value for the signature to verify. Regenerate the fixture after renaming.
     cryptosuite: 'webauthn-2026',
     created: '2026-01-20T10:34:14.021014500Z',
     challenge: '5a32268a-0072-4d9d-b465-a1587cb44c5c',
@@ -49,7 +53,7 @@ const signedLd = {
   },
 };
 
-describe('Webauthn2026Cryptosuite', () => {
+describe('Fido4vcCryptosuite', () => {
   it('verify fido signature with JWK public key', async () => {
     expect(await verifyProofSignature(ProofValue, jwk)).toBe(true);
   });
@@ -58,12 +62,12 @@ describe('Webauthn2026Cryptosuite', () => {
     expect(extractChallenge(ProofValue.clientData)).toBe(expected);
   });
   it('verify signed LD document', async () => {
-    const result = await Webauthn2026Cryptosuite.verify(signedLd);
+    const result = await Fido4vcCryptosuite.verify(signedLd);
     expect(result.verified).toBe(true);
   });
   it('changed presentation should fail verification', async () => {
     const tamperedLd = { ...signedLd, holder: 'did:example:tampered' };
-    const result = await Webauthn2026Cryptosuite.verify(tamperedLd);
+    const result = await Fido4vcCryptosuite.verify(tamperedLd);
     expect(result.verified).toBe(false);
   });
   it('changed clientData should fail verification', async () => {

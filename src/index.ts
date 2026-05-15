@@ -1,4 +1,4 @@
 export * from './types';
 export * from './lib/cryptosuite';
-export { Webauthn2026Cryptosuite } from './suites/webauthn/webauthn-2026';
+export { Fido4vcCryptosuite } from './suites/fido4vc/fido4vc-cryptosuite';
 export * as did from './lib/did';

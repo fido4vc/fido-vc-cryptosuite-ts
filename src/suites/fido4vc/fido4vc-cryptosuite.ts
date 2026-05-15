@@ -5,7 +5,7 @@ import JCSCanonicalize from 'canonicalize';
 import { extractProofValue, extractChallenge, verifyProofSignature } from './helpers';
 import { resolveDid } from '../../lib/did';
 
-const name = 'webauthn-2026';
+const name = 'fido4vc-jcs-2026';
 
 export async function canonicalize(document: VerifiablePresentation) {
   const { proofOptions, docWithoutProof } = getProofData(document);
@@ -41,7 +41,7 @@ export async function verify(document: VerifiablePresentation) {
   }
 }
 
-export const Webauthn2026Cryptosuite: ICryptosuite = {
+export const Fido4vcCryptosuite: ICryptosuite = {
   name,
   canonicalize,
   sign,

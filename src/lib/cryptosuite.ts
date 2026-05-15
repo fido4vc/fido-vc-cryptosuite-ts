@@ -1,9 +1,9 @@
 import { ICryptosuite, VerifiablePresentation } from '../types';
-import { Webauthn2026Cryptosuite } from '../suites/webauthn/webauthn-2026';
+import { Fido4vcCryptosuite } from '../suites/fido4vc/fido4vc-cryptosuite';
 import { getProofData } from '../lib/utils';
 
 export const supportedSuites: Map<string, ICryptosuite> = new Map([
-  [Webauthn2026Cryptosuite.name, Webauthn2026Cryptosuite],
+  [Fido4vcCryptosuite.name, Fido4vcCryptosuite],
 ]);
 
 export function getCryptosuite(cryptosuiteName: string): ICryptosuite {

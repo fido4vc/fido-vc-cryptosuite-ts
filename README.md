@@ -1,5 +1,8 @@
 # fido-vc-cryptosuite-ts
 
+> TypeScript reference implementation of the [`fido4vc-jcs-2026`](https://fido4vc.github.io/spec/fido4vc-jcs-2026/) W3C VC Data Integrity cryptosuite.
+> Part of the [FIDO4VC project](https://fido4vc.github.io).
+
 A W3C [Verifiable Credential Data Integrity](https://www.w3.org/TR/vc-data-integrity/) cryptosuite for **FIDO/WebAuthn-signed Verifiable Presentations**.
 
 When a holder presents a VP using a FIDO authenticator (Passkey, YubiKey, Touch ID, Windows Hello, …), the resulting WebAuthn assertion is wrapped as a Data Integrity proof on the VP. This package canonicalizes such documents, validates the WebAuthn challenge binding, and verifies the FIDO signature against the public key resolved from the proof's DID.
@@ -8,7 +11,7 @@ When a holder presents a VP using a FIDO authenticator (Passkey, YubiKey, Touch 
 
 - W3C VC Data Integrity-shaped `ICryptosuite` interface (`canonicalize` / `sign` / `verify`).
 - Pluggable cryptosuite registry — register additional suites alongside the built-in one.
-- Built-in suite: **`webauthn-2026`** — verifies VPs whose proof is a FIDO/WebAuthn assertion.
+- Built-in suite: **`fido4vc-jcs-2026`** — verifies VPs whose proof is a FIDO/WebAuthn assertion.
 - DID resolution helpers (currently supports `did:jwk`).
 - Zero-config: JCS canonicalization + SHA-256 hashing of `{document, proof options}`.
 
@@ -48,16 +51,16 @@ async function verify(vp: VerifiablePresentation) {
 ### Use a specific suite directly
 
 ```ts
-import { Webauthn2026Cryptosuite } from 'fido-vc-cryptosuite-ts';
+import { Fido4vcCryptosuite } from 'fido-vc-cryptosuite-ts';
 
 // Compute the challenge a FIDO authenticator must sign over
-const challenge = await Webauthn2026Cryptosuite.canonicalize(unsignedVp);
+const challenge = await Fido4vcCryptosuite.canonicalize(unsignedVp);
 
 // Later, verify the assertion-signed VP
-const result = await Webauthn2026Cryptosuite.verify(signedVp);
+const result = await Fido4vcCryptosuite.verify(signedVp);
 ```
 
-> Note: `webauthn-2026` is verify-only by design — the signature comes from the FIDO authenticator, not from this library. Calling `sign(...)` will throw.
+> Note: `fido4vc-jcs-2026` is verify-only by design — the signature comes from the FIDO authenticator, not from this library. Calling `sign(...)` will throw.
 
 ### Resolve a DID
 
@@ -71,7 +74,7 @@ const jwk = did.resolveDid('did:jwk:eyJ...'); // returns the JWK public key
 
 | Name             | Sign | Verify | Notes |
 |------------------|------|--------|-------|
-| `webauthn-2026`  | ❌   | ✅     | FIDO2/WebAuthn assertions over JCS-canonicalized VP |
+| `fido4vc-jcs-2026`  | ❌   | ✅     | FIDO2/WebAuthn assertions over JCS-canonicalized VP |
 
 ## Supported DID methods
 
@@ -79,7 +82,7 @@ const jwk = did.resolveDid('did:jwk:eyJ...'); // returns the JWK public key
 |------------|--------|
 | `did:jwk`  | ✅ |
 
-## How verification works (webauthn-2026)
+## How verification works (`fido4vc-jcs-2026`)
 
 1. Strip the `proof` from the VP; JCS-canonicalize the document and the proof options separately.
 2. SHA-256 hash them in sequence — this is the **expected challenge**.
@@ -102,11 +105,23 @@ export interface ICryptosuite {
 export function getCryptosuite(name: string): ICryptosuite;
 export function getCryptosuiteForDocument(vp: VerifiablePresentation): ICryptosuite;
 
-export const Webauthn2026Cryptosuite: ICryptosuite;
+export const Fido4vcCryptosuite: ICryptosuite;
 export const did: { resolveDid(did: string): JwkPublicKey };
 
 // Types: JsonDocument, JsonLdDocument, Proof, VerifiablePresentation,
 //        SignOptions, VerificationResult, JwkPublicKey, ProofValueType
+```
+
+## Develop locally
+
+Prerequisites: Node.js ≥ 18, npm.
+
+```bash
+git clone https://github.com/fido4vc/fido-vc-cryptosuite-ts
+cd fido-vc-cryptosuite-ts
+npm install
+npm run build      # compile TS -> dist/
+npm test           # run Jest test suite
 ```
 
 ## Scripts
@@ -131,6 +146,14 @@ npm publish
 
 For private registries, configure `publishConfig.registry` in `package.json` accordingly.
 
+## Related projects
+
+Part of the [FIDO4VC project](https://github.com/fido4vc):
+
+- [fido-vc-middleware](https://github.com/fido4vc/fido-vc-middleware) — Express bridge between FIDO/WebAuthn and the walt.id Wallet API. Consumes this package.
+- [fido-vc-verifier-sidecar](https://github.com/fido4vc/fido-vc-verifier-sidecar) — HTTP service exposing this cryptosuite's verification to non-Node verifier stacks.
+- [fido-vc-wallet-ui](https://github.com/fido4vc/fido-vc-wallet-ui) — Next.js user-facing wallet UI.
+
 ## License
 
-ISC
+Licensed under the [Apache License 2.0](./LICENSE).
