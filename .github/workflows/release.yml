@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  packages: write
   issues: write
   pull-requests: write
   id-token: write
@@ -26,8 +25,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: https://npm.pkg.github.com
-          scope: '@fido4vc'
+          registry-url: https://registry.npmjs.org/
 
       - name: Install dependencies
         run: npm install
@@ -38,5 +36,5 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx semantic-release
