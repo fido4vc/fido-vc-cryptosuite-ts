@@ -1,0 +1,75 @@
+{
+  "name": "fido-vc-cryptosuite-ts",
+  "version": "1.0.0",
+  "description": "W3C VC Data Integrity cryptosuite for FIDO/WebAuthn-signed Verifiable Presentations — TypeScript reference implementation.",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "fido",
+    "fido2",
+    "webauthn",
+    "verifiable-credentials",
+    "verifiable-presentations",
+    "vc",
+    "json-ld",
+    "data-integrity",
+    "cryptosuite",
+    "did",
+    "ssi"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://bitbucket.telekom-mms.com/scm/ssi/waltid-identity.git",
+    "directory": "waltid-applications/fido-vc-app/fido-vc-cryptosuite-ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "test": "jest",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\""
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.0.9",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "jest": "^30.2.0",
+    "prettier": "^3.4.0",
+    "rimraf": "^6.0.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@simplewebauthn/server": "^13.2.2",
+    "canonicalize": "^2.1.0"
+  }
+}

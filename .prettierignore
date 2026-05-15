@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+coverage/
+
+# Config files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Misc
+*.md
