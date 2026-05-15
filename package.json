@@ -1,6 +1,6 @@
 {
   "name": "@fido4vc/fido-vc-cryptosuite-ts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "W3C VC Data Integrity cryptosuite for FIDO/WebAuthn-signed Verifiable Presentations — TypeScript reference implementation.",
   "license": "Apache-2.0",
   "author": "",

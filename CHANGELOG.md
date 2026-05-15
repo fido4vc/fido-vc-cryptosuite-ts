@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/fido4vc/fido-vc-cryptosuite-ts/compare/v1.0.0...v1.0.1) (2026-05-15)
+
+
+### Bug Fixes
+
+* publish to npmjs.com instead of GitHub Packages ([f8b0035](https://github.com/fido4vc/fido-vc-cryptosuite-ts/commit/f8b003589bc95325f4fa02191173d9af39ef7dfd))
+
 # 1.0.0 (2026-05-15)
 
 
