@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/fido4vc/fido4vc.github.io/main/src/assets/fido4vc-logo-color.svg" alt="FIDO4VC" width="180"/>
+</p>
+
 # fido-vc-cryptosuite-ts
 
 [![npm version](https://img.shields.io/npm/v/@fido4vc/fido-vc-cryptosuite-ts.svg)](https://www.npmjs.com/package/@fido4vc/fido-vc-cryptosuite-ts)
