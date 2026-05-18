@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/fido4vc/fido4vc.github.io/main/src/assets/fido4vc-logo-color.svg" alt="FIDO4VC" width="180"/>
+  <img src="https://raw.githubusercontent.com/fido4vc/.github/main/assets/fido4vc-logo-color.svg" alt="FIDO4VC" width="180"/>
 </p>
 
 # fido-vc-cryptosuite-ts
