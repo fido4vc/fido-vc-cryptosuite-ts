@@ -1,3 +1,6 @@
+// The DID below is a public did:jwk identifier and the expected JWK is its
+// (public) decoded form. No private key material is present in this test.
+
 import { resolveDid } from '../src/lib/did';
 
 describe('DID Tests', () => {

@@ -1,3 +1,9 @@
+// Captured WebAuthn assertion artifacts used to drive the verification tests
+// end-to-end without a live FIDO authenticator. The JWK below has only its
+// public coordinates (kty/crv/x/y — no `d`), and a WebAuthn signature plus
+// its associated authenticatorData/clientData are public by design. These
+// are reference fixtures, not credentials — there is no secret material here.
+
 import { extractChallenge, verifyProofSignature } from '../src/suites/fido4vc/helpers';
 import { Fido4vcCryptosuite } from '../src/suites/fido4vc/fido4vc-cryptosuite';
 import { base64urlToUtf8 } from '../src/lib/utils';

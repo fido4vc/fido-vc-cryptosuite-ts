@@ -1,5 +1,8 @@
 # fido-vc-cryptosuite-ts
 
+[![npm version](https://img.shields.io/npm/v/@fido4vc/fido-vc-cryptosuite-ts.svg)](https://www.npmjs.com/package/@fido4vc/fido-vc-cryptosuite-ts)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
+
 > TypeScript reference implementation of the [`fido4vc-jcs-2026`](https://fido4vc.github.io/spec/fido4vc-jcs-2026/) W3C VC Data Integrity cryptosuite.
 > Part of the [FIDO4VC project](https://fido4vc.github.io).
 
@@ -17,26 +20,21 @@ When a holder presents a VP using a FIDO authenticator (Passkey, YubiKey, Touch 
 
 ## Install
 
+Published to npmjs.com as a public scoped package — no auth required.
+
 ```bash
-npm install fido-vc-cryptosuite-ts
+npm install @fido4vc/fido-vc-cryptosuite-ts
 ```
 
-Or, when developing inside this monorepo, depend on it via a local file reference:
-
-```json
-{
-  "dependencies": {
-    "fido-vc-cryptosuite-ts": "file:../fido-vc-cryptosuite-ts"
-  }
-}
-```
+- npm: <https://www.npmjs.com/package/@fido4vc/fido-vc-cryptosuite-ts>
+- Source: <https://github.com/fido4vc/fido-vc-cryptosuite-ts>
 
 ## Usage
 
 ### Verify a Verifiable Presentation
 
 ```ts
-import { getCryptosuiteForDocument, VerifiablePresentation } from 'fido-vc-cryptosuite-ts';
+import { getCryptosuiteForDocument, VerifiablePresentation } from '@fido4vc/fido-vc-cryptosuite-ts';
 
 async function verify(vp: VerifiablePresentation) {
   const suite = getCryptosuiteForDocument(vp);
@@ -51,7 +49,7 @@ async function verify(vp: VerifiablePresentation) {
 ### Use a specific suite directly
 
 ```ts
-import { Fido4vcCryptosuite } from 'fido-vc-cryptosuite-ts';
+import { Fido4vcCryptosuite } from '@fido4vc/fido-vc-cryptosuite-ts';
 
 // Compute the challenge a FIDO authenticator must sign over
 const challenge = await Fido4vcCryptosuite.canonicalize(unsignedVp);
@@ -65,7 +63,7 @@ const result = await Fido4vcCryptosuite.verify(signedVp);
 ### Resolve a DID
 
 ```ts
-import { did } from 'fido-vc-cryptosuite-ts';
+import { did } from '@fido4vc/fido-vc-cryptosuite-ts';
 
 const jwk = did.resolveDid('did:jwk:eyJ...'); // returns the JWK public key
 ```
@@ -123,6 +121,22 @@ npm install
 npm run build      # compile TS -> dist/
 npm test           # run Jest test suite
 ```
+
+### Running the tests
+
+```bash
+npm test                       # full suite
+npm test -- --watch            # watch mode
+npm test -- did.test           # only DID tests
+npm test -- fido4vc.test       # only cryptosuite tests
+```
+
+The test fixtures in `tests/` are captured WebAuthn assertion artifacts
+(public JWK coordinates, `authenticatorData`, `clientData`, `signature`)
+plus a signed Verifiable Presentation. They drive the verification path
+end-to-end without needing a live FIDO authenticator. None of the values
+are private keys — WebAuthn assertions and their components are public
+by design — so the fixtures can be committed and reused freely.
 
 ## Scripts
 
