@@ -1,6 +1,6 @@
+// Base on @simplewebauthn/server's verifySignatureJwk
+
 import { webcrypto } from 'crypto';
-import { cose } from '@simplewebauthn/server/helpers';
-import type { Uint8Array_ } from '@simplewebauthn/server';
 import { unwrapEC2Signature } from './unwrap-ec2-signature';
 
 /**
@@ -22,8 +22,8 @@ async function importKey(opts: {
  */
 async function verifyEC2(opts: {
   keyData: webcrypto.JsonWebKey;
-  signature: Uint8Array_;
-  data: Uint8Array_;
+  signature: Uint8Array<ArrayBuffer>;
+  data: Uint8Array<ArrayBuffer>;
 }): Promise<boolean> {
   const { keyData, signature, data } = opts;
 
@@ -63,8 +63,8 @@ async function verifyEC2(opts: {
  */
 async function verifyOKP(opts: {
   keyData: webcrypto.JsonWebKey;
-  signature: Uint8Array_;
-  data: Uint8Array_;
+  signature: Uint8Array<ArrayBuffer>;
+  data: Uint8Array<ArrayBuffer>;
 }): Promise<boolean> {
   const { keyData, signature, data } = opts;
 
@@ -101,8 +101,8 @@ async function verifyOKP(opts: {
  */
 async function verifyRSA(opts: {
   keyData: webcrypto.JsonWebKey;
-  signature: Uint8Array_;
-  data: Uint8Array_;
+  signature: Uint8Array<ArrayBuffer>;
+  data: Uint8Array<ArrayBuffer>;
 }): Promise<boolean> {
   const { keyData, signature, data } = opts;
 
@@ -174,19 +174,19 @@ async function verifyRSA(opts: {
  */
 export async function verifyFidoSignature(opts: {
   keyData: webcrypto.JsonWebKey;
-  signature: Uint8Array_;
-  data: Uint8Array_;
+  signature: Uint8Array<ArrayBuffer>;
+  data: Uint8Array<ArrayBuffer>;
 }): Promise<boolean> {
   const { keyData, signature, data } = opts;
 
   if (keyData.kty === 'EC') {
     let unwrappedSignature = signature;
     if (keyData.crv === 'P-256') {
-      unwrappedSignature = unwrapEC2Signature(signature, cose.COSECRV.P256);
+      unwrappedSignature = unwrapEC2Signature(signature, 'P-256');
     } else if (keyData.crv === 'P-384') {
-      unwrappedSignature = unwrapEC2Signature(signature, cose.COSECRV.P384);
+      unwrappedSignature = unwrapEC2Signature(signature, 'P-384');
     } else if (keyData.crv === 'P-521') {
-      unwrappedSignature = unwrapEC2Signature(signature, cose.COSECRV.P521);
+      unwrappedSignature = unwrapEC2Signature(signature, 'P-521');
     }
 
     return verifyEC2({
