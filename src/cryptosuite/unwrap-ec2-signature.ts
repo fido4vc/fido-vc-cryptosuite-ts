@@ -10,7 +10,10 @@ export type CrvType = 'P-256' | 'P-384' | 'P-521';
  *
  * See https://www.w3.org/TR/webauthn-2/#sctn-signature-attestation-types
  */
-export function unwrapEC2Signature(signature: Uint8Array<ArrayBuffer>, crv: CrvType): Uint8Array<ArrayBuffer> {
+export function unwrapEC2Signature(
+  signature: Uint8Array<ArrayBuffer>,
+  crv: CrvType
+): Uint8Array<ArrayBuffer> {
   const parsedSignature = AsnParser.parse(signature, ECDSASigValue);
   const rBytes = new Uint8Array(parsedSignature.r);
   const sBytes = new Uint8Array(parsedSignature.s);
@@ -58,7 +61,10 @@ function getSignatureComponentLength(crv: CrvType): number {
  * See <https://www.itu.int/rec/T-REC-X.690-202102-I/en>
  * See <https://www.w3.org/TR/WebCryptoAPI/#ecdsa-operations>
  */
-function toNormalizedBytes(bytes: Uint8Array<ArrayBuffer>, componentLength: number): Uint8Array<ArrayBuffer> {
+function toNormalizedBytes(
+  bytes: Uint8Array<ArrayBuffer>,
+  componentLength: number
+): Uint8Array<ArrayBuffer> {
   let normalizedBytes: Uint8Array<ArrayBuffer>;
 
   if (bytes.length < componentLength) {

@@ -12,7 +12,6 @@ const FIXTURE_DID_JWK =
 const FIXTURE_DID_KEY_P256 = 'did:key:zDnaerDaTF5BXEavCrfRZEk316dpbLsfPDZ3WJ5hRTPFU2169';
 const FIXTURE_DID_KEY_P256_VM_URL = `${FIXTURE_DID_KEY_P256}#zDnaerDaTF5BXEavCrfRZEk316dpbLsfPDZ3WJ5hRTPFU2169`;
 
-
 describe('DidResolver', () => {
   describe('resolveDid (did:jwk)', () => {
     it('returns a DIDDocument for a valid did:jwk', async () => {

@@ -35,13 +35,6 @@ export interface VerificationResult {
   error?: unknown;
 }
 
-export interface Cryptosuite {
-  name: string;
-  verifyProof(document: Record<string, unknown>): Promise<VerificationResult>;
-  createProof(document: Record<string, unknown>, options: Record<string, unknown>): Promise<Proof>;
-  [key: string]: unknown;
-}
-
 export interface WebAuthnAssertion {
   authenticatorData: Uint8Array;
   signature: Uint8Array;

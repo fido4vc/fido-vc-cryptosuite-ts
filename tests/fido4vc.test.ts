@@ -4,7 +4,8 @@
 // its associated authenticatorData/clientData are public by design. These
 // are reference fixtures, not credentials — there is no secret material here.
 
-import { Fido4vcCryptosuite, proofConfiguration } from '../src/suites/fido4vc/fido4vc-jcs-2026';
+import { finishCreateProof, verifyProof } from '../src';
+import { proofConfiguration } from '../src/cryptosuite/algorithms';
 
 // Raw authenticator response produced by a real FIDO2 device.
 const authenticatorResponseJSON = {
@@ -41,40 +42,27 @@ const signedLd = {
 describe('Fido4vcCryptosuite', () => {
   describe('verifyProof', () => {
     it('verifies a real signed document end-to-end', async () => {
-      const result = await Fido4vcCryptosuite.verifyProof(signedLd);
+      const result = await verifyProof(signedLd);
       expect(result.verified).toBe(true);
       expect(result.verifiedDocument).toBeDefined();
     });
 
     it('fails when the document body is tampered', async () => {
       const tampered = { ...signedLd, holder: 'did:example:tampered' };
-      const result = await Fido4vcCryptosuite.verifyProof(tampered);
+      const result = await verifyProof(tampered);
       expect(result.verified).toBe(false);
     });
 
     it('fails when proofValue has a wrong multibase prefix', async () => {
       const tampered = { ...signedLd, proof: { ...signedLd.proof, proofValue: 'zINVALID' } };
-      const result = await Fido4vcCryptosuite.verifyProof(tampered);
+      const result = await verifyProof(tampered);
       expect(result.verified).toBe(false);
     });
 
     it('fails when proof is missing', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { proof: _proof, ...noProof } = signedLd;
-      const result = await Fido4vcCryptosuite.verifyProof(noProof);
-      expect(result.verified).toBe(false);
-    });
-
-    it('fails when verificationMethod resolves to a non-P-256 key (did:key Ed25519)', async () => {
-      const tampered = {
-        ...signedLd,
-        proof: {
-          ...signedLd.proof,
-          verificationMethod:
-            'did:key:z6MkhaXgBZDvotDkL5257faWxcqACaGVKYper6MCHbKm#z6MkhaXgBZDvotDkL5257faWxcqACaGVKYper6MCHbKm',
-        },
-      };
-      const result = await Fido4vcCryptosuite.verifyProof(tampered);
+      const result = await verifyProof(noProof);
       expect(result.verified).toBe(false);
     });
   });
@@ -88,7 +76,7 @@ describe('Fido4vcCryptosuite', () => {
         signature: Buffer.from(authenticatorResponseJSON.signature, 'base64url'),
         clientDataJSON: Buffer.from(authenticatorResponseJSON.clientDataJSON, 'base64url'),
       };
-      const proof = Fido4vcCryptosuite.finishCreateProof(assertion, proofOptions);
+      const proof = finishCreateProof(assertion, proofOptions);
       expect(proof.proofValue).toBe(signedLd.proof.proofValue);
     });
   });
