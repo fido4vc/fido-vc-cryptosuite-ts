@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 import { decode as cborDecode, encode as cborEncode } from 'cbor-x';
 import JCS from 'canonicalize';
-import { resolveDid } from '../../lib/did';
+import { defaultResolver } from '../../lib/resolver';
 import { verifyFidoSignature } from './verify-signature-jwk';
 import {
   PROOF_GENERATION_ERROR,
@@ -129,7 +129,7 @@ async function proofVerification(
   if (typeof verificationMethod !== 'string') {
     throw PROOF_VERIFICATION_ERROR('proof.verificationMethod must be a string');
   }
-  const publicKey = resolveDid(verificationMethod);
+  const publicKey = await defaultResolver.resolveVerificationMethod(verificationMethod);
 
   // Validate key type (spec §2.1)
   if (publicKey.kty !== 'EC') {

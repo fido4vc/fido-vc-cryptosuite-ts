@@ -1,4 +1,5 @@
 import type { webcrypto } from 'crypto';
+export type { DIDDocument, VerificationMethod } from 'did-resolver';
 
 export type JwkPublicKey = webcrypto.JsonWebKey;
 

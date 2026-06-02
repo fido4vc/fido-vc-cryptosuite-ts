@@ -64,6 +64,19 @@ describe('Fido4vcCryptosuite', () => {
       const result = await Fido4vcCryptosuite.verifyProof(noProof);
       expect(result.verified).toBe(false);
     });
+
+    it('fails when verificationMethod resolves to a non-P-256 key (did:key Ed25519)', async () => {
+      const tampered = {
+        ...signedLd,
+        proof: {
+          ...signedLd.proof,
+          verificationMethod:
+            'did:key:z6MkhaXgBZDvotDkL5257faWxcqACaGVKYper6MCHbKm#z6MkhaXgBZDvotDkL5257faWxcqACaGVKYper6MCHbKm',
+        },
+      };
+      const result = await Fido4vcCryptosuite.verifyProof(tampered);
+      expect(result.verified).toBe(false);
+    });
   });
 
   describe('finishCreateProof', () => {

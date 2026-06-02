@@ -74,7 +74,10 @@
   "dependencies": {
     "@peculiar/asn1-ecc": "^2.7.0",
     "@peculiar/asn1-schema": "^2.7.0",
+    "@sphereon/ssi-sdk-ext.did-resolver-jwk": "^0.37.1",
+    "@sphereon/ssi-sdk-ext.did-resolver-key": "^0.37.1",
     "canonicalize": "^2.1.0",
-    "cbor-x": "^1.6.4"
+    "cbor-x": "^1.6.4",
+    "did-resolver": "^4.1.0"
   }
 }
