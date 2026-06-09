@@ -1,7 +1,7 @@
 import type { webcrypto } from 'crypto';
+export type { DIDDocument, VerificationMethod } from 'did-resolver';
 
 export type JwkPublicKey = webcrypto.JsonWebKey;
-export type ProofValueType = string | number | JsonDocument;
 
 export interface JsonDocument {
   [key: string]: unknown;
@@ -16,10 +16,10 @@ export interface Proof {
   cryptosuite: string;
   verificationMethod: string;
   proofPurpose: string;
-  proofValue: ProofValueType;
   created?: string;
   challenge?: string;
   domain?: string;
+  proofValue: string;
 }
 
 export interface VerifiablePresentation extends JsonLdDocument {
@@ -29,23 +29,14 @@ export interface VerifiablePresentation extends JsonLdDocument {
   proof?: Proof | Proof[];
 }
 
-export interface SignOptions {
-  document: JsonLdDocument;
-  privateKey: JwkPublicKey;
-  verificationMethod: string;
-  proofPurpose: string;
-  challenge?: string;
-  domain?: string;
-}
-
 export interface VerificationResult {
   verified: boolean;
-  error?: string;
+  verifiedDocument?: JsonDocument;
+  error?: unknown;
 }
 
-export interface ICryptosuite {
-  name: string;
-  canonicalize(document: JsonDocument): Promise<Buffer<ArrayBuffer>>;
-  sign<T extends ProofValueType>(options: JsonLdDocument): Promise<T>;
-  verify(options: JsonLdDocument): Promise<VerificationResult>;
+export interface WebAuthnAssertion {
+  authenticatorData: Uint8Array;
+  signature: Uint8Array;
+  clientDataJSON: Uint8Array;
 }

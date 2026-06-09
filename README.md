@@ -12,107 +12,176 @@
 
 A W3C [Verifiable Credential Data Integrity](https://www.w3.org/TR/vc-data-integrity/) cryptosuite for **FIDO/WebAuthn-signed Verifiable Presentations**.
 
-When a holder presents a VP using a FIDO authenticator (Passkey, YubiKey, Touch ID, Windows Hello, …), the resulting WebAuthn assertion is wrapped as a Data Integrity proof on the VP. This package canonicalizes such documents, validates the WebAuthn challenge binding, and verifies the FIDO signature against the public key resolved from the proof's DID.
+When a holder presents a VP using a FIDO authenticator (passkey, YubiKey, Touch ID, Windows Hello, …), the resulting WebAuthn assertion is wrapped as a `DataIntegrityProof` on the VP. This package canonicalizes such a document, binds the WebAuthn challenge to the canonicalized bytes, resolves the holder's public key from the proof's DID, and verifies the FIDO signature.
 
 ## Features
 
-- W3C VC Data Integrity-shaped `ICryptosuite` interface (`canonicalize` / `sign` / `verify`).
-- Pluggable cryptosuite registry — register additional suites alongside the built-in one.
-- Built-in suite: **`fido4vc-jcs-2026`** — verifies VPs whose proof is a FIDO/WebAuthn assertion.
-- DID resolution helpers (currently supports `did:jwk`).
-- Zero-config: JCS canonicalization + SHA-256 hashing of `{document, proof options}`.
+- **Verification** of VPs whose proof is a FIDO/WebAuthn assertion (`verifyProof`).
+- **Proof assembly** helpers for the two-phase WebAuthn flow (`startCreateProof` / `finishCreateProof`) — the actual signature is produced by the authenticator, not by this library.
+- JCS canonicalization + SHA-256 hashing of `{proof configuration, document}`, per the `fido4vc-jcs-2026` cryptosuite.
+- Pluggable DID / verification-method resolution via the `VerificationMethodResolver` interface; a default resolver supports `did:jwk` and `did:key`.
+- Structured, W3C-aligned `DataIntegrityError` reporting.
+- No private key material ever touches this library.
 
 ## Install
-
-Published to npmjs.com as a public scoped package — no auth required.
 
 ```bash
 npm install @fido4vc/fido-vc-cryptosuite-ts
 ```
+
+Requires **Node.js ≥ 18** (uses the WebCrypto API from `node:crypto`).
 
 - npm: <https://www.npmjs.com/package/@fido4vc/fido-vc-cryptosuite-ts>
 - Source: <https://github.com/fido4vc/fido-vc-cryptosuite-ts>
 
 ## Usage
 
-### Verify a Verifiable Presentation
+### Verify a signed Verifiable Presentation
 
 ```ts
-import { getCryptosuiteForDocument, VerifiablePresentation } from '@fido4vc/fido-vc-cryptosuite-ts';
+import { verifyProof } from '@fido4vc/fido-vc-cryptosuite-ts';
 
-async function verify(vp: VerifiablePresentation) {
-  const suite = getCryptosuiteForDocument(vp);
-  const result = await suite.verify(vp);
-  // { verified: true } | { verified: false, error: '...' }
-  return result;
+const result = await verifyProof(signedVp);
+
+if (result.verified) {
+  // result.verifiedDocument is the VP with the proof removed
+  console.log('valid', result.verifiedDocument);
+} else {
+  // result.error is a DataIntegrityError
+  console.error('invalid', result.error);
 }
 ```
 
-`getCryptosuiteForDocument` reads `proof.cryptosuite` from the document and returns the matching registered suite, or throws if the name is not registered.
+`verifyProof` never throws — any failure is captured and returned as
+`{ verified: false, error }`.
 
-### Use a specific suite directly
+### Use a custom resolver
 
-```ts
-import { Fido4vcCryptosuite } from '@fido4vc/fido-vc-cryptosuite-ts';
-
-// Compute the challenge a FIDO authenticator must sign over
-const challenge = await Fido4vcCryptosuite.canonicalize(unsignedVp);
-
-// Later, verify the assertion-signed VP
-const result = await Fido4vcCryptosuite.verify(signedVp);
-```
-
-> Note: `fido4vc-jcs-2026` is verify-only by design — the signature comes from the FIDO authenticator, not from this library. Calling `sign(...)` will throw.
-
-### Resolve a DID
+By default, `verifyProof` resolves `proof.verificationMethod` with a built-in
+resolver supporting `did:jwk` and `did:key`. To support other DID methods or
+inject your own key lookup, pass a `VerificationMethodResolver`:
 
 ```ts
-import { did } from '@fido4vc/fido-vc-cryptosuite-ts';
+import { verifyProof, VerificationMethodResolver, JwkPublicKey } from '@fido4vc/fido-vc-cryptosuite-ts';
 
-const jwk = did.resolveDid('did:jwk:eyJ...'); // returns the JWK public key
+const myResolver: VerificationMethodResolver = {
+  async resolveVerificationMethod(vmUrl: string): Promise<JwkPublicKey> {
+    // look up vmUrl however you like and return a public JWK
+    return /* JwkPublicKey */;
+  },
+};
+
+const result = await verifyProof(signedVp, myResolver);
 ```
 
-## Supported cryptosuites
+### Assemble a proof from a WebAuthn assertion
 
-| Name             | Sign | Verify | Notes |
-|------------------|------|--------|-------|
-| `fido4vc-jcs-2026`  | ❌   | ✅     | FIDO2/WebAuthn assertions over JCS-canonicalized VP |
+Signing is a two-phase operation because the signature comes from the FIDO
+authenticator:
 
-## Supported DID methods
+```ts
+import { startCreateProof, finishCreateProof } from '@fido4vc/fido-vc-cryptosuite-ts';
+
+// 1. Compute the bytes the authenticator must sign over (the WebAuthn challenge).
+const proofOptions = {
+  type: 'DataIntegrityProof',
+  cryptosuite: 'fido4vc-jcs-2026',
+  proofPurpose: 'authentication',
+  verificationMethod: 'did:jwk:eyJ...#0',
+};
+const hashData = startCreateProof(proofOptions, unsecuredVp);
+const challenge = hashData.toString('base64url'); // pass to navigator.credentials.get()
+
+// 2. After the authenticator responds, wrap the assertion into a proof.
+const proof = finishCreateProof(
+  {
+    authenticatorData: assertion.authenticatorData, // Uint8Array
+    signature: assertion.signature,                 // Uint8Array
+    clientDataJSON: assertion.clientDataJSON,        // Uint8Array
+  },
+  proofOptions,
+);
+
+const signedVp = { ...unsecuredVp, proof };
+```
+
+### Resolve a verification method directly
+
+```ts
+import { resolver } from '@fido4vc/fido-vc-cryptosuite-ts';
+
+const jwk = await resolver.defaultResolver.resolveVerificationMethod('did:jwk:eyJ...#0');
+const didDoc = await resolver.defaultResolver.resolveDid('did:key:zDnae...');
+```
+
+## Supported DID methods (default resolver)
 
 | Method     | Status |
 |------------|--------|
 | `did:jwk`  | ✅ |
+| `did:key`  | ✅ |
+
+Other methods can be supported by supplying your own `VerificationMethodResolver`.
 
 ## How verification works (`fido4vc-jcs-2026`)
 
-1. Strip the `proof` from the VP; JCS-canonicalize the document and the proof options separately.
-2. SHA-256 hash them in sequence — this is the **expected challenge**.
-3. Extract `clientData.challenge` from the proof value and confirm it equals the expected challenge.
-4. Resolve `proof.verificationMethod` (DID) to a JWK public key.
-5. Recompute the WebAuthn signed bytes (`authenticatorData || sha256(clientData)`) and verify the signature against the resolved key.
+1. Split the `proof` from the secured document.
+2. **Transform** — JCS-canonicalize the unsecured document (requires
+   `proof.type === "DataIntegrityProof"` and `proof.cryptosuite === "fido4vc-jcs-2026"`).
+3. **Proof configuration** — copy the proof options, drop `proofValue`, inject the
+   document's `@context`, and JCS-canonicalize.
+4. **Hash** — `hashData = sha256(proofConfig) || sha256(transformedDocument)`
+   (64 bytes).
+5. Decode `proof.proofValue` — a multibase (`u`, base64url) string wrapping a CBOR
+   array `[authenticatorData, signature, clientDataJSON]`.
+6. **Verify** the WebAuthn assertion:
+   - `clientData.type` must be `webauthn.get`;
+   - `clientData.challenge` must equal `hashData` (base64url);
+   - resolve `proof.verificationMethod` to an EC public JWK;
+   - recompute the signed bytes `authenticatorData || sha256(clientDataJSON)` and
+     verify `signature` against the resolved key.
 
-Any failure returns `{ verified: false, error }`; success returns `{ verified: true }`.
+Any failure returns `{ verified: false, error }`; success returns
+`{ verified: true, verifiedDocument }`.
 
 ## Public API
 
 ```ts
-export interface ICryptosuite {
-  name: string;
-  canonicalize(document: JsonDocument): Promise<Buffer>;
-  sign<T>(document: JsonLdDocument): Promise<T>;
-  verify(document: JsonLdDocument): Promise<VerificationResult>;
+// Verification
+function verifyProof(
+  securedDocument: JsonDocument,
+  resolver?: VerificationMethodResolver,
+): Promise<VerificationResult>;
+
+// Proof assembly (signature is produced externally by the authenticator)
+function startCreateProof(options: JsonDocument, unsecuredDocument: JsonDocument): Buffer;
+function finishCreateProof(assertion: WebAuthnAssertion, options: JsonDocument): Proof;
+
+const SUITE_NAME = 'fido4vc-jcs-2026';
+
+// Resolution (namespace export)
+namespace resolver {
+  interface VerificationMethodResolver {
+    resolveVerificationMethod(vmUrl: string): Promise<JwkPublicKey>;
+  }
+  class DidResolver implements VerificationMethodResolver { /* + resolveDid(did) */ }
+  const defaultResolver: DidResolver; // did:jwk + did:key
+  class ResolverError extends Error {}
 }
 
-export function getCryptosuite(name: string): ICryptosuite;
-export function getCryptosuiteForDocument(vp: VerifiablePresentation): ICryptosuite;
+// Errors
+class DataIntegrityError extends Error {} // { type, code, title, detail }
+function PROOF_GENERATION_ERROR(detail: string): DataIntegrityError;
+function PROOF_TRANSFORMATION_ERROR(detail: string): DataIntegrityError;
+function PROOF_VERIFICATION_ERROR(detail: string): DataIntegrityError;
 
-export const Fido4vcCryptosuite: ICryptosuite;
-export const did: { resolveDid(did: string): JwkPublicKey };
-
-// Types: JsonDocument, JsonLdDocument, Proof, VerifiablePresentation,
-//        SignOptions, VerificationResult, JwkPublicKey, ProofValueType
+// Types
+// JsonDocument, JsonLdDocument, Proof, VerifiablePresentation, VerificationResult,
+// WebAuthnAssertion, JwkPublicKey, VerificationMethodResolver, DIDDocument, VerificationMethod
 ```
+
+> `VerificationMethodResolver` is also re-exported at the top level for convenience,
+> alongside the `resolver` namespace.
 
 ## Develop locally
 
@@ -123,46 +192,45 @@ git clone https://github.com/fido4vc/fido-vc-cryptosuite-ts
 cd fido-vc-cryptosuite-ts
 npm install
 npm run build      # compile TS -> dist/
-npm test           # run Jest test suite
+npm test           # run the Jest suite
 ```
 
 ### Running the tests
 
 ```bash
 npm test                       # full suite
-npm test -- --watch            # watch mode
-npm test -- did.test           # only DID tests
+npm test -- resolver.test      # only resolver tests
 npm test -- fido4vc.test       # only cryptosuite tests
 ```
 
-The test fixtures in `tests/` are captured WebAuthn assertion artifacts
-(public JWK coordinates, `authenticatorData`, `clientData`, `signature`)
-plus a signed Verifiable Presentation. They drive the verification path
-end-to-end without needing a live FIDO authenticator. None of the values
-are private keys — WebAuthn assertions and their components are public
-by design — so the fixtures can be committed and reused freely.
+The fixtures in `tests/` are captured WebAuthn assertion artifacts (public JWK
+coordinates, `authenticatorData`, `clientDataJSON`, `signature`) plus a signed
+Verifiable Presentation. They drive the verification path end-to-end without a
+live FIDO authenticator. WebAuthn assertions and their components are public by
+design — there is no secret material here — so the fixtures can be committed and
+reused freely.
 
 ## Scripts
 
-| Script              | What it does                                  |
-|---------------------|-----------------------------------------------|
-| `npm run build`     | Compile TypeScript to `dist/`                 |
-| `npm run watch`     | Compile in watch mode                         |
-| `npm run clean`     | Remove `dist/`                                |
-| `npm test`          | Run Jest tests                                |
-| `npm run lint`      | Run ESLint                                    |
-| `npm run lint:fix`  | Run ESLint with `--fix`                       |
-| `npm run format`    | Format source with Prettier                   |
+| Script              | What it does                          |
+|---------------------|---------------------------------------|
+| `npm run build`     | Compile TypeScript to `dist/`         |
+| `npm run watch`     | Compile in watch mode                 |
+| `npm run clean`     | Remove `dist/`                        |
+| `npm test`          | Run the Jest test suite               |
+| `npm run lint`      | Run ESLint                            |
+| `npm run lint:fix`  | Run ESLint with `--fix`               |
+| `npm run format`    | Format sources with Prettier          |
 
 ## Publishing
 
-`prepublishOnly` cleans and rebuilds before publish, so a fresh `dist/` is always shipped. The published tarball contains only `dist/`, `README.md`, and `LICENSE` (see `files` in [package.json](./package.json)).
+`prepublishOnly` cleans and rebuilds before every publish, so a fresh `dist/` is
+always shipped. The published tarball contains only `dist/`, `README.md`, and
+`LICENSE` (see `files` in [package.json](./package.json)).
 
 ```bash
 npm publish
 ```
-
-For private registries, configure `publishConfig.registry` in `package.json` accordingly.
 
 ## Related projects
 

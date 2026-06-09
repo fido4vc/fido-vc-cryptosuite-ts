@@ -1,14 +1,19 @@
+// Based on @simplewebauthn/server/helpers/unwrapEC2Signature.ts.
+
 import { AsnParser } from '@peculiar/asn1-schema';
 import { ECDSASigValue } from '@peculiar/asn1-ecc';
-import { cose } from '@simplewebauthn/server/helpers';
-import { Uint8Array_ } from '@simplewebauthn/server';
+
+export type CrvType = 'P-256' | 'P-384' | 'P-521';
 
 /**
  * In WebAuthn, EC2 signatures are wrapped in ASN.1 structure so we need to peel r and s apart.
  *
  * See https://www.w3.org/TR/webauthn-2/#sctn-signature-attestation-types
  */
-export function unwrapEC2Signature(signature: Uint8Array_, crv: cose.COSECRV): Uint8Array_ {
+export function unwrapEC2Signature(
+  signature: Uint8Array<ArrayBuffer>,
+  crv: CrvType
+): Uint8Array<ArrayBuffer> {
   const parsedSignature = AsnParser.parse(signature, ECDSASigValue);
   const rBytes = new Uint8Array(parsedSignature.r);
   const sBytes = new Uint8Array(parsedSignature.s);
@@ -31,13 +36,13 @@ export function unwrapEC2Signature(signature: Uint8Array_, crv: cose.COSECRV): U
  *
  * See <https://www.w3.org/TR/WebCryptoAPI/#ecdsa-operations>
  */
-function getSignatureComponentLength(crv: cose.COSECRV): number {
+function getSignatureComponentLength(crv: CrvType): number {
   switch (crv) {
-    case cose.COSECRV.P256:
+    case 'P-256':
       return 32;
-    case cose.COSECRV.P384:
+    case 'P-384':
       return 48;
-    case cose.COSECRV.P521:
+    case 'P-521':
       return 66;
     default:
       throw new Error(`Unexpected COSE crv value of ${crv} (EC2)`);
@@ -56,8 +61,11 @@ function getSignatureComponentLength(crv: cose.COSECRV): number {
  * See <https://www.itu.int/rec/T-REC-X.690-202102-I/en>
  * See <https://www.w3.org/TR/WebCryptoAPI/#ecdsa-operations>
  */
-function toNormalizedBytes(bytes: Uint8Array_, componentLength: number): Uint8Array_ {
-  let normalizedBytes: Uint8Array_;
+function toNormalizedBytes(
+  bytes: Uint8Array<ArrayBuffer>,
+  componentLength: number
+): Uint8Array<ArrayBuffer> {
+  let normalizedBytes: Uint8Array<ArrayBuffer>;
 
   if (bytes.length < componentLength) {
     // In case the bytes are shorter than expected, we need to pad it with leading `0`s.

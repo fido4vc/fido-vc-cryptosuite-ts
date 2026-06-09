@@ -1,4 +1,4 @@
 export * from './types';
-export * from './lib/cryptosuite';
-export { Fido4vcCryptosuite } from './suites/fido4vc/fido4vc-cryptosuite';
-export * as did from './lib/did';
+export * from './lib/errors';
+export * from './cryptosuite/fido4vc-jcs-2026';
+export * as resolver from './lib/resolver';
